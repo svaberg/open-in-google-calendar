@@ -18,7 +18,7 @@ set -euo pipefail
 SCRIPT_DIR="${0:A:h}"
 SOURCE_SCRIPT="${SCRIPT_DIR}/open-ics-in-google-calendar.applescript"
 TARGET_DIR="${HOME}/Library/Scripts/Folder Action Scripts"
-TARGET_SCRIPT="${TARGET_DIR}/add - open in Google Calendar.scpt"
+TARGET_SCRIPT="${TARGET_DIR}/open - in Google Calendar.scpt"
 APP_DIR="${HOME}/Applications"
 APP_PATH="${APP_DIR}/Open in Google Calendar.app"
 APP_INFO_PLIST="${APP_PATH}/Contents/Info.plist"
@@ -26,10 +26,45 @@ APP_BUNDLE_ID="com.dagfev.openicsingooglecalendar"
 OLD_TARGET_SCRIPT="${TARGET_DIR}/calendar-download-alert.scpt"
 OLD_APP_PATH="${APP_DIR}/Calendar Download Alert.app"
 OLDER_TARGET_SCRIPT="${TARGET_DIR}/open-ics-in-google-calendar.scpt"
+OLDER2_TARGET_SCRIPT="${TARGET_DIR}/add - open in Google Calendar.scpt"
 OLDER_APP_PATH="${APP_DIR}/Open ICS In Google Calendar.app"
 LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
-SET_DEFAULT_HANDLER="${SET_DEFAULT_HANDLER:-1}"
+SET_DEFAULT_HANDLER="${SET_DEFAULT_HANDLER:-ask}"
 OPEN_FOLDER_ACTIONS_SETUP="${OPEN_FOLDER_ACTIONS_SETUP:-1}"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --set-default)
+      SET_DEFAULT_HANDLER="1"
+      ;;
+    --no-default)
+      SET_DEFAULT_HANDLER="0"
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      echo "Usage: $0 [--set-default | --no-default]" >&2
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+if [[ "${SET_DEFAULT_HANDLER}" == "ask" ]]; then
+  if [[ -t 0 ]]; then
+    printf 'Set "Open in Google Calendar" as the default app for .ics files? [Y/n] '
+    read -r reply
+    case "${reply}" in
+      "" | [Yy] | [Yy][Ee][Ss])
+        SET_DEFAULT_HANDLER="1"
+        ;;
+      *)
+        SET_DEFAULT_HANDLER="0"
+        ;;
+    esac
+  else
+    SET_DEFAULT_HANDLER="0"
+  fi
+fi
 
 mkdir -p "${TARGET_DIR}"
 mkdir -p "${APP_DIR}"
@@ -40,6 +75,9 @@ if [[ -e "${OLD_TARGET_SCRIPT}" ]]; then
 fi
 if [[ -e "${OLDER_TARGET_SCRIPT}" ]]; then
   rm -f "${OLDER_TARGET_SCRIPT}"
+fi
+if [[ -e "${OLDER2_TARGET_SCRIPT}" ]]; then
+  rm -f "${OLDER2_TARGET_SCRIPT}"
 fi
 if [[ -d "${OLD_APP_PATH}" ]]; then
   "${LSREGISTER}" -u "${OLD_APP_PATH}" >/dev/null 2>&1 || true
@@ -79,10 +117,13 @@ ObjC.import('CoreServices')
 const env = $.NSProcessInfo.processInfo.environment
 const bundleId = env.objectForKey('APP_BUNDLE_ID_FOR_JXA')
 const contentTypes = ['com.apple.ical.ics', 'public.calendar-event']
+const roles = [$.kLSRolesViewer, $.kLSRolesAll]
 for (const contentType of contentTypes) {
-  const status = $.LSSetDefaultRoleHandlerForContentType($(contentType), $.kLSRolesViewer, bundleId)
-  if (Number(status) !== 0) {
-    throw new Error('LSSetDefaultRoleHandlerForContentType failed for ' + contentType + ' with status ' + Number(status))
+  for (const role of roles) {
+    const status = $.LSSetDefaultRoleHandlerForContentType($(contentType), role, bundleId)
+    if (Number(status) !== 0) {
+      throw new Error('LSSetDefaultRoleHandlerForContentType failed for ' + contentType + ' with status ' + Number(status))
+    }
   }
 }
 JXA
@@ -98,8 +139,18 @@ Next step:
   2. Enable Folder Actions if prompted.
   3. Attach ${TARGET_SCRIPT} to your Downloads folder.
   4. When an .ics file is downloaded, a pre-filled Google Calendar event page will open in your browser.
+EOF
+
+if [[ "${SET_DEFAULT_HANDLER}" == "1" ]]; then
+  cat <<EOF
   5. Double-clicking an .ics file should now open this app and launch the same pre-filled Google Calendar page.
 EOF
+else
+  cat <<EOF
+  5. To make this the default .ics opener later, run:
+     ./install-open-ics-in-google-calendar.sh --set-default
+EOF
+fi
 
 if [[ "${OPEN_FOLDER_ACTIONS_SETUP}" == "1" ]]; then
   open "/System/Library/CoreServices/Applications/Folder Actions Setup.app"
