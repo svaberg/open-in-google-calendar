@@ -12,7 +12,7 @@ This project installs:
 ```sh
 ./install-open-in-google-calendar.sh
 ```
-The app will ask
+The installer will ask
 ```
 Set "Open in Google Calendar" as the default app for .ics files? [y/N]
 ```
