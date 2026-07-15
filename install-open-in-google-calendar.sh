@@ -7,14 +7,18 @@ SCRIPT_DIR=${0:A:h}
 APPLESCRIPT_SOURCE="${SCRIPT_DIR}/open-in-google-calendar.applescript"
 APP_INFO_TEMPLATE="${SCRIPT_DIR}/open-in-google-calendar-Info.plist"
 SET_DEFAULT_HANDLER_SCRIPT="${SCRIPT_DIR}/set-default-handler.js"
+APP_ICON_SOURCE="${SCRIPT_DIR}/assets/open-in-google-calendar-icon.png"
 
 FOLDER_ACTIONS_DIR="${HOME}/Library/Scripts/Folder Action Scripts"
 FOLDER_ACTION_SCRIPT_PATH="${FOLDER_ACTIONS_DIR}/Open in Google Calendar.scpt"
 
-APPLICATIONS_DIR="${HOME}/Applications"
-APPLICATION_PATH="${APPLICATIONS_DIR}/Open in Google Calendar.app"
+APPLICATION_SUPPORT_DIR="${HOME}/Library/Application Support/Open in Google Calendar"
+APPLICATION_PATH="${APPLICATION_SUPPORT_DIR}/Open in Google Calendar.app"
 APPLICATION_INFO_PLIST="${APPLICATION_PATH}/Contents/Info.plist"
+APPLICATION_RESOURCES_DIR="${APPLICATION_PATH}/Contents/Resources"
 APPLICATION_BUNDLE_ID="com.dagfev.openicsingooglecalendar"
+APPLICATION_ICON_NAME="OpenInGoogleCalendar"
+APPLICATION_ICON_PATH="${APPLICATION_RESOURCES_DIR}/${APPLICATION_ICON_NAME}.icns"
 
 LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
 SET_DEFAULT_HANDLER="${SET_DEFAULT_HANDLER:-ask}"
@@ -65,13 +69,37 @@ ask_about_default_handler() {
   esac
 }
 
+build_app_icon() {
+  if [[ ! -f "${APP_ICON_SOURCE}" ]]; then
+    echo "Missing app icon source: ${APP_ICON_SOURCE}" >&2
+    exit 1
+  fi
+
+  local iconset_root iconset_dir size retina_size
+  iconset_root=$(mktemp -d)
+  iconset_dir="${iconset_root}/${APPLICATION_ICON_NAME}.iconset"
+  mkdir -p "${iconset_dir}"
+
+  for size in 16 32 128 256 512; do
+    retina_size=$(( size * 2 ))
+    sips -z "${size}" "${size}" "${APP_ICON_SOURCE}" --out "${iconset_dir}/icon_${size}x${size}.png" >/dev/null
+    sips -z "${retina_size}" "${retina_size}" "${APP_ICON_SOURCE}" --out "${iconset_dir}/icon_${size}x${size}@2x.png" >/dev/null
+  done
+
+  iconutil -c icns "${iconset_dir}" -o "${APPLICATION_ICON_PATH}"
+  rm -rf "${iconset_root}"
+}
+
 install_folder_action_and_app() {
-  mkdir -p "${FOLDER_ACTIONS_DIR}" "${APPLICATIONS_DIR}"
+  mkdir -p "${FOLDER_ACTIONS_DIR}" "${APPLICATION_SUPPORT_DIR}"
 
   osacompile -o "${FOLDER_ACTION_SCRIPT_PATH}" "${APPLESCRIPT_SOURCE}"
   osacompile -o "${APPLICATION_PATH}" "${APPLESCRIPT_SOURCE}"
 
+  mkdir -p "${APPLICATION_RESOURCES_DIR}"
   cp "${APP_INFO_TEMPLATE}" "${APPLICATION_INFO_PLIST}"
+  build_app_icon
+  touch "${APPLICATION_PATH}"
   "${LSREGISTER}" -f "${APPLICATION_PATH}" >/dev/null
 }
 

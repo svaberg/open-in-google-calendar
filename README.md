@@ -20,7 +20,7 @@ If you want this action to be the default, press `Y`, otherwise press `N`. You s
 ```
 Installed:
   /Users/dagfev/Library/Scripts/Folder Action Scripts/Open in Google Calendar.scpt
-  /Users/dagfev/Applications/Open in Google Calendar.app
+  /Users/dagfev/Library/Application Support/Open in Google Calendar/Open in Google Calendar.app
 ```
 The installer will proceed to open the `Folder Actions Setup`. To automatically process files in the `Downloads` folder you should: 
 
@@ -41,7 +41,7 @@ The file opens as a pre-filled Google Calendar event in your browser. The event 
 
 Remove:
 
-- `/Users/dagfev/Applications/Open in Google Calendar.app`
+- `/Users/dagfev/Library/Application Support/Open in Google Calendar/Open in Google Calendar.app`
 - `/Users/dagfev/Library/Scripts/Folder Action Scripts/Open in Google Calendar.scpt`
 
 If you set it as the default opener for `.ics` files, change the default app in Finder afterwards.
