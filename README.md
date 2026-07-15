@@ -36,3 +36,12 @@ The installer will proceed to open the `Folder Actions Setup`. To automatically 
 - double-click an `.ics` file
 
 The file opens as a pre-filled Google Calendar event in your browser. The event is not added until you click the `Save` button in the browser.
+
+## Uninstall
+
+Remove:
+
+- `/Users/dagfev/Applications/Open in Google Calendar.app`
+- `/Users/dagfev/Library/Scripts/Folder Action Scripts/open - in Google Calendar.scpt`
+
+If you set it as the default opener for `.ics` files, change the default app in Finder afterwards.

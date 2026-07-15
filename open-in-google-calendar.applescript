@@ -1,18 +1,9 @@
 (*
-Open ICS In Google Calendar
+Open In Google Calendar
 
-What this script does:
-- Handles .ics files from a Folder Action or when the app is opened with a file.
-- Reads the selected .ics file locally on your Mac.
-- Parses the first VEVENT in that file.
-- Builds a Google Calendar "new event" URL with pre-filled fields.
-- Opens that URL in your default browser.
-
-What it does not do:
-- No Google API or OAuth.
-- No background service, daemon, or polling loop.
-- No hidden network request. The only networked step is opening
-  calendar.google.com in your browser after you click Open.
+Opens a downloaded .ics file as a pre-filled Google Calendar event.
+Reads the file locally, takes the first VEVENT, builds the Google Calendar URL,
+and opens that page in the default browser.
 *)
 
 use framework "Foundation"
